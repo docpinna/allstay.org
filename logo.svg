@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 60">
+  <text x="0" y="40" font-size="36" font-family="Segoe UI, sans-serif" fill="#00bfa5" font-weight="bold">
+    All
+  </text>
+  <text x="75" y="40" font-size="36" font-family="Segoe UI, sans-serif" fill="#004d40">
+    Stay
+  </text>
+  <text x="155" y="40" font-size="18" font-family="Segoe UI, sans-serif" fill="#00796b">
+    .org
+  </text>
+</svg>

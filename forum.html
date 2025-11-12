@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AllStay | Community Forum</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html"><img src="logo.svg" alt="AllStay Logo"></a>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="listings.html">Listings</a>
+      <a href="forum.html" class="active">Forum</a>
+      <a href="about.html">About</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <section class="forum">
+    <h1>Community Forum</h1>
+    <p class="intro">Ask, share and connect with other travelers around the world 🌍</p>
+
+    <!-- Dynamic forum list -->
+    <div class="forum-list" id="forum-list"></div>
+
+    <div class="new-post">
+      <a href="#" class="btn">Start a new discussion</a>
+    </div>
+  </section>
+
+  <footer>
+    © AllStay.org — Where travelers connect with pride.
+  </footer>
+
+  <!-- Supabase connection -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://dhayzyafthemfiacqmfe.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYXl6eWFmdGhlbWZpYWNxbWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzODM1NjksImV4cCI6MjA3Nzk1OTU2OX0.osKVA0S5Evl5qsKuqdkMgtHtKX8ubV8VPHSrQHl4cFI";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function loadPosts() {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      const container = document.getElementById("forum-list");
+      container.innerHTML = "";
+
+      if (error) {
+        console.error(error);
+        container.innerHTML = `<p class="meta" style="color:red;">Error loading posts. Please try again later.</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = `<p class="meta">No discussions yet. Be the first to start one!</p>`;
+        return;
+      }
+
+      data.forEach((post) => {
+        const div = document.createElement("div");
+        div.className = "thread";
+        div.innerHTML = `
+          <h2><a href="#">${post.title}</a></h2>
+          <p class="meta">Posted by user ${post.user_id ? post.user_id.substring(0, 8) : "anon"} · ${new Date(post.created_at).toLocaleString()}</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadPosts);
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AllStay | Community Forum</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #fafafa; color: #333; }
+    .forum { max-width: 800px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .section { border-bottom: 1px solid #eee; padding: 20px 0; }
+    .section:last-child { border: none; }
+    .section h2 a { color: #0077ff; text-decoration: none; }
+    .section h2 a:hover { text-decoration: underline; }
+    .section p { margin: 5px 0 0; color: #666; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html"><img src="logo.svg" alt="AllStay Logo" /></a>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="listings.html">Listings</a>
+      <a href="forum.html" class="active">Forum</a>
+      <a href="about.html">About</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <section class="forum">
+    <h1>Community Forum</h1>
+    <p class="intro">Choose a section to start exploring discussions 🌍</p>
+
+    <div id="sections-list"></div>
+  </section>
+
+  <footer>
+    © AllStay.org — Where travelers connect with pride.
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://dhayzyafthemfiacqmfe.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYXl6eWFmdGhlbWZpYWNxbWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzODM1NjksImV4cCI6MjA3Nzk1OTU2OX0.osKVA0S5Evl5qsKuqdkMgtHtKX8ubV8VPHSrQHl4cFI";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function loadSections() {
+      const { data, error } = await supabase
+        .from("sections")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      const container = document.getElementById("sections-list");
+      container.innerHTML = "";
+
+      if (error) {
+        container.innerHTML = `<p style="color:red;">Error loading sections.</p>`;
+        console.error(error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = `<p>No sections yet. Add some in Supabase to start the forum.</p>`;
+        return;
+      }
+
+      data.forEach((section) => {
+        const div = document.createElement("div");
+        div.className = "section";
+        div.innerHTML = `
+          <h2><a href="threads.html?section=${section.id}">${section.name}</a></h2>
+          <p>${section.description || ""}</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadSections);
+  </script>
+</body>
+</html>
+

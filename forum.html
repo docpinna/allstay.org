@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AllStay | Community Forum</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #fafafa; color: #333; }
+    .forum { max-width: 800px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .thread { border-bottom: 1px solid #eee; padding: 15px 0; }
+    .thread:last-child { border: none; }
+    .meta { color: #888; font-size: 0.9em; }
+    .btn { background: #0077ff; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: #005fcc; }
+    .hidden { display: none; }
+    .form { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    .form input, .form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    .form .btn.cancel { background: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html"><img src="logo.svg" alt="AllStay Logo"></a>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="listings.html">Listings</a>
+      <a href="forum.html" class="active">Forum</a>
+      <a href="about.html">About</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <section class="forum">
+    <h1>Community Forum</h1>
+    <p class="intro">Ask, share and connect with other travelers around the world 🌍</p>
+
+    <!-- New post button -->
+    <div class="new-post">
+      <button id="newPostBtn" class="btn">Start a new discussion</button>
+    </div>
+
+    <!-- New post form -->
+    <div id="newPostForm" class="form hidden">
+      <h2>Create a new discussion</h2>
+      <input type="text" id="postTitle" placeholder="Post title" />
+      <textarea id="postContent" placeholder="Write your message..." rows="5"></textarea>
+      <button id="submitPost" class="btn">Publish</button>
+      <button id="cancelPost" class="btn cancel">Cancel</button>
+    </div>
+
+    <!-- Forum posts -->
+    <div id="forum-list" class="forum-list"></div>
+  </section>
+
+  <footer>
+    © AllStay.org — Where travelers connect with pride.
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://dhayzyafthemfiacqmfe.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYXl6eWFmdGhlbWZpYWNxbWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzODM1NjksImV4cCI6MjA3Nzk1OTU2OX0.osKVA0S5Evl5qsKuqdkMgtHtKX8ubV8VPHSrQHl4cFI";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const forumList = document.getElementById("forum-list");
+    const newPostBtn = document.getElementById("newPostBtn");
+    const newPostForm = document.getElementById("newPostForm");
+    const submitPost = document.getElementById("submitPost");
+    const cancelPost = document.getElementById("cancelPost");
+
+    // Load posts from Supabase
+    async function loadPosts() {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      forumList.innerHTML = "";
+
+      if (error) {
+        forumList.innerHTML = `<p class="meta" style="color:red;">Error loading posts. Please try again later.</p>`;
+        console.error(error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        forumList.innerHTML = `<p class="meta">No discussions yet. Be the first to start one!</p>`;
+        return;
+      }
+
+      data.forEach((post) => {
+        const div = document.createElement("div");
+        div.className = "thread";
+        div.innerHTML = `
+          <h2>${post.title}</h2>
+          <p>${post.content}</p>
+          <p class="meta">Posted on ${new Date(post.created_at).toLocaleString()}</p>
+        `;
+        forumList.appendChild(div);
+      });
+    }
+
+    // New discussion button
+    newPostBtn.addEventListener("click", () => {
+      newPostForm.classList.remove("hidden");
+      newPostBtn.style.display = "none";
+    });
+
+    // Cancel
+    cancelPost.addEventListener("click", () => {
+      newPostForm.classList.add("hidden");
+      newPostBtn.style.display = "inline-block";
+    });
+
+    // Publish
+    submitPost.addEventListener("click", async () => {
+      const title = document.getElementById("postTitle").value.trim();
+      const content = document.getElementById("postContent").value.trim();
+
+      if (!title || !content) {
+        alert("Please fill in both fields.");
+        return;
+      }
+
+      const { error } = await supabase.from("posts").insert([{ title, content }]);
+      if (error) {
+        alert("Error publishing post.");
+        console.error(error);
+        return;
+      }
+
+      alert("Post published!");
+      document.getElementById("postTitle").value = "";
+      document.getElementById("postContent").value = "";
+      newPostForm.classList.add("hidden");
+      newPostBtn.style.display = "inline-block";
+      loadPosts();
+    });
+
+    document.addEventListener("DOMContentLoaded", loadPosts);
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AllStay | Thread</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #fafafa; color: #333; }
+    .forum { max-width: 800px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .thread-header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+    .thread-header h1 { color: #0077ff; }
+    .meta { color: #888; font-size: 0.9em; margin-bottom: 20px; }
+    .comment { border-bottom: 1px solid #eee; padding: 10px 0; }
+    .comment:last-child { border: none; }
+    .comment .author { font-weight: bold; }
+    .form { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    .form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    .btn { background: #0077ff; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+    .btn:hover { background: #005fcc; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html"><img src="logo.svg" alt="AllStay Logo" /></a>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="listings.html">Listings</a>
+      <a href="forum.html" class="active">Forum</a>
+      <a href="about.html">About</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <section class="forum">
+    <div class="thread-header">
+      <h1 id="thread-title">Loading...</h1>
+      <p id="thread-content"></p>
+      <p class="meta" id="thread-meta"></p>
+    </div>
+
+    <div id="comments-list"></div>
+
+    <div class="form">
+      <h3>Add a comment</h3>
+      <textarea id="commentContent" placeholder="Write your comment..." rows="4"></textarea>
+      <button id="submitComment" class="btn">Publish</button>
+    </div>
+  </section>
+
+  <footer>
+    © AllStay.org — Where travelers connect with pride.
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://dhayzyafthemfiacqmfe.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYXl6eWFmdGhlbWZpYWNxbWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzODM1NjksImV4cCI6MjA3Nzk1OTU2OX0.osKVA0S5Evl5qsKuqdkMgtHtKX8ubV8VPHSrQHl4cFI";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const threadId = new URLSearchParams(window.location.search).get("id");
+    const threadTitle = document.getElementById("thread-title");
+    const threadContent = document.getElementById("thread-content");
+    const threadMeta = document.getElementById("thread-meta");
+    const commentsList = document.getElementById("comments-list");
+    const commentContent = document.getElementById("commentContent");
+    const submitComment = document.getElementById("submitComment");
+
+    async function loadThread() {
+      const { data: thread, error } = await supabase
+        .from("threads")
+        .select("*")
+        .eq("id", threadId)
+        .single();
+
+      if (error || !thread) {
+        threadTitle.textContent = "Thread not found";
+        return;
+      }
+
+      threadTitle.textContent = thread.title;
+      threadContent.textContent = thread.content;
+      threadMeta.textContent = `Posted by ${thread.author} · ${new Date(thread.created_at).toLocaleString()}`;
+
+      loadComments();
+    }
+
+    async function loadComments() {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("thread_id", threadId)
+        .order("created_at", { ascending: true });
+
+      commentsList.innerHTML = "";
+
+      if (error) {
+        commentsList.innerHTML = `<p style="color:red;">Error loading comments.</p>`;
+        console.error(error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        commentsList.innerHTML = `<p>No comments yet. Start the conversation!</p>`;
+        return;
+      }
+
+      data.forEach((comment) => {
+        const div = document.createElement("div");
+        div.className = "comment";
+        div.innerHTML = `
+          <p class="author">${comment.author}</p>
+          <p>${comment.content}</p>
+          <p class="meta">${new Date(comment.created_at).toLocaleString()}</p>
+        `;
+        commentsList.appendChild(div);
+      });
+    }
+
+    submitComment.addEventListener("click", async () => {
+      const content = commentContent.value.trim();
+      if (!content) {
+        alert("Please write a comment before publishing.");
+        return;
+      }
+
+      const { error } = await supabase.from("comments").insert([
+        { thread_id: threadId, content, author: "Guest" }
+      ]);
+
+      if (error) {
+        alert("Error publishing comment.");
+        console.error(error);
+        return;
+      }
+
+      commentContent.value = "";
+      loadComments();
+    });
+
+    document.addEventListener("DOMContentLoaded", loadThread);
+  </script>
+</body>
+</html>
